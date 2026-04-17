@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import Lenis from 'lenis'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
-  const lenisRef = useRef<Lenis | null>(null)
-
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -13,14 +15,15 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       smoothWheel: true,
     })
 
-    lenisRef.current = lenis
+    // Yeh line Lenis ko GSAP ke sath connect karti hai
+    lenis.on('scroll', ScrollTrigger.update)
 
-    function raf(time: number) {
-      lenis.raf(time)
-      requestAnimationFrame(raf)
-    }
+    // GSAP ke ticker ko use kar rahe hain instead of custom raf
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000)
+    })
 
-    requestAnimationFrame(raf)
+    gsap.ticker.lagSmoothing(0)
 
     return () => {
       lenis.destroy()
